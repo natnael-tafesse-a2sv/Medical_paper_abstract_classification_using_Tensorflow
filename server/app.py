@@ -5,7 +5,7 @@ import tensorflow as tf
 app = Flask(__name__)
 CORS(app)
 
-model = tf.saved_model.load('../model/')
+model = tf.keras.models.load_model('../saved_model/')
 
 @app.route('/process', methods=['POST'])
 def process_query():
@@ -16,9 +16,19 @@ def process_query():
 
     if 'abstract' not in data:
         return jsonify({"error": "Abstract is required"}), 400
+    
+    abstract = data['abstract']
+    
+    try: 
+        tensor_abstract = tf.constant([abstract])
+        
+        result = model.predict(tensor_abstract)[0]
 
-    print("")
-    return jsonify({'result': "Hello World"})
+    except Exception as e:
+        print(e)
+        return jsonify({'error': "Prediction error"})
+
+    return jsonify({'result': result})
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000)
